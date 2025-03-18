@@ -2,26 +2,30 @@ import requests
 import streamlit as st
 from datetime import datetime, timedelta
 
-def fetch_news(topic):
+def fetch_news(topic, num_articles=10):
     """Fetches the latest news articles from NewsAPI."""
     api_key = st.secrets["general"]["NEWS_API_KEY"]
     
-    # Get today's date (YYYY-MM-DD)
-    today = datetime.now().strftime('%Y-%m-%(d-1)')
+    yesterday = (datetime.now() - timedelta(days=1)).strftime('%Y-%m-%d')
     
-    url = f'https://newsapi.org/v2/everything?q={topic}&from={today}&sortBy=publishedAt&apiKey={api_key}'
+    url = f'https://newsapi.org/v2/everything?q={topic}&from={yesterday}&sortBy=publishedAt&pageSize={num_articles}&apiKey={api_key}'
     
     response = requests.get(url).json()
     articles = response.get("articles", [])
 
+    # Get the actual number of articles found
+    available_articles = len(articles)
+    
     news_data = []
-    for article in articles[:5]:
+    for article in articles[:available_articles]:  
+        image_url = article.get("urlToImage") or "https://via.placeholder.com/300?text=No+Image"
+
         news_data.append({
             "title": article.get("title", "No Title"),
             "description": article.get("description", "No description available"),
-            "image": article.get("urlToImage", ""),
+            "image": image_url,
             "url": article.get("url", "#"),
             "published_at": article.get("publishedAt", "Unknown date"),
         })
 
-    return news_data
+    return news_data, available_articles
