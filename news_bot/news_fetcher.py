@@ -1,21 +1,23 @@
-import requests
-import os
-from dotenv import load_dotenv
-
-load_dotenv()
-
+# Fetch news from NewsAPI with error handling
 def fetch_news(topic):
-    api_key = os.getenv("NEWS_API_KEY")
+    api_key = st.secrets["general"]["NEWS_API_KEY"]
     url = f'https://newsapi.org/v2/everything?q={topic}&apiKey={api_key}'
     response = requests.get(url).json()
     articles = response.get("articles", [])
     news_data = []
+    
+    for article in articles[:5]:
+        image_url = article.get("urlToImage", "")
+        
+        # Use a placeholder image if no valid image URL is present
+        if not image_url or not image_url.startswith("http"):
+            image_url = "https://via.placeholder.com/300?text=No+Image"
 
-    for article in articles[:5]:  
         news_data.append({
             "title": article["title"],
             "description": article.get("description", "No description available"),
-            "image": article.get("urlToImage", "")
+            "image": image_url
         })
-
+    
     return news_data
+
